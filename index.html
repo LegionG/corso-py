@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>CineManiaci</title>
+</head>
+
+<body style="font-family: sans-serif; max-width: 900px; margin: auto;">
+
+<h1>🎬 CineManiaci</h1>
+
+<input type="text" id="campoCerca" placeholder="Cerca film...">
+<button onclick="avviaRicerca()">Cerca</button>
+
+<div id="risultati"></div>
+
+<script>
+const API_URL = "https://friendly-invention-9rwvwjr9g6wh6w7-8000.app.github.dev/";
+
+async function avviaRicerca() {
+    let risposta = await fetch("https://friendly-invention-9rwvwjr9g6wh6w7-8000.app.github.dev/film");
+    let dati = await risposta.json();
+
+    let lista = document.getElementById("risultati");
+    lista.innerHTML = "";
+
+    dati.forEach(p => {
+        let div = document.createElement("div");
+
+        div.innerHTML = `
+            <h3>${p.titolo}</h3>
+        `;
+
+        lista.appendChild(div);
+    });
+}
+</script>
+
+</body>
+</html>
