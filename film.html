@@ -2,11 +2,323 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dettaglio Film</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #141e30, #243b55);
+            color: white;
+            padding: 30px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: auto;
+        }
+        .header {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 40px;
+            align-items: flex-start;
+        }
+        .poster {
+            width: 300px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .poster img {
+            width: 100%;
+            height: auto;
+        }
+        .info h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        .info p {
+            font-size: 1.1rem;
+            color: #ddd;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        .anno {
+            color: #ff4757;
+            font-weight: bold;
+        }
+        .section-title {
+            font-size: 1.8rem;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ff4757;
+            padding-bottom: 10px;
+        }
+        .videos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        .video-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .video-card h4 {
+            margin-bottom: 10px;
+            color: #ff4757;
+        }
+        .video-card iframe {
+            width: 100%;
+            height: 200px;
+            border-radius: 10px;
+            border: none;
+        }
+        .video-card p {
+            font-size: 0.9rem;
+            color: #bbb;
+            margin-top: 10px;
+        }
+        .btn-delete {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+        .btn-delete:hover {
+            background: #ff6b81;
+        }
+        .form-video {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .form-video h3 {
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .btn-submit {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+        }
+        .btn-submit:hover {
+            background: #ff6b81;
+        }
+        .btn-back {
+            background: #666;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-bottom: 20px;
+        }
+        .btn-back:hover {
+            background: #888;
+        }
+        .empty-message {
+            text-align: center;
+            color: #bbb;
+            padding: 40px;
+        }
+    </style>
 </head>
 <body>
+    <div class="container">
+        <button class="btn-back" onclick="window.history.back()">← Torna indietro</button>
+        
+        <div class="header">
+            <div class="poster">
+                <img id="poster" src="" alt="Locandina">
+            </div>
+            <div class="info">
+                <h1 id="titolo">Caricamento...</h1>
+                <p><span class="anno" id="anno"></span></p>
+                <p><strong>Trama:</strong></p>
+                <p id="trama"></p>
+            </div>
+        </div>
 
-    <h1 id="titolo">Caricamento...</h1>
+        <h2 class="section-title">Video e Commenti</h2>
+        <div id="video-list" class="videos-grid"></div>
 
+        <div class="form-video">
+            <h3>Aggiungi Video YouTube</h3>
+            <form id="form-video">
+                <div class="form-group">
+                    <label for="url-video">URL Video YouTube:</label>
+                    <input type="text" id="url-video" placeholder="https://www.youtube.com/watch?v=..." required>
+                </div>
+                <div class="form-group">
+                    <label for="commento">Commento:</label>
+                    <textarea id="commento" placeholder="Scrivi un commento sul video..."></textarea>
+                </div>
+                <button type="submit" class="btn-submit">Aggiungi Video</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "http://localhost:8000";
+        let filmId = null;
+
+        // Estrai ID dalla URL
+        function getFilmIdFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get("id");
+        }
+
+        // Converti YouTube URL in ID embed
+        function getYoutubeEmbedId(url) {
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length == 11) ? match[2] : null;
+        }
+
+        async function caricaFilm() {
+            filmId = getFilmIdFromURL();
+            
+            if (!filmId) {
+                document.getElementById("titolo").innerText = "Film non trovato";
+                return;
+            }
+
+            try {
+                let risposta = await fetch(API_URL + "/film/" + filmId);
+                let dati = await risposta.json();
+
+                if (!dati || dati.length === 0) {
+                    document.getElementById("titolo").innerText = "Film non trovato";
+                    return;
+                }
+
+                let film = dati[0];
+                document.getElementById("titolo").innerText = film.titolo;
+                document.getElementById("anno").innerText = "📅 " + film.anno;
+                document.getElementById("trama").innerText = film.trama || "Trama non disponibile";
+                document.getElementById("poster").src = film.url_locandina;
+
+                caricaVideo();
+            } catch (e) {
+                console.error("Errore nel caricamento del film:", e);
+            }
+        }
+
+        async function caricaVideo() {
+            try {
+                let risposta = await fetch(API_URL + "/film/" + filmId + "/video");
+                let video = await risposta.json();
+
+                let lista = document.getElementById("video-list");
+                lista.innerHTML = "";
+
+                if (!video || video.length === 0) {
+                    lista.innerHTML = "<p class='empty-message'>Nessun video ancora</p>";
+                    return;
+                }
+
+                video.forEach(v => {
+                    let embedId = getYoutubeEmbedId(v.url_video_youtube);
+                    let div = document.createElement("div");
+                    div.className = "video-card";
+                    div.innerHTML = `
+                        <h4>Video</h4>
+                        <iframe src="https://www.youtube.com/embed/${embedId}" allowfullscreen></iframe>
+                        <p><strong>Commento:</strong> ${v.commento || "Nessun commento"}</p>
+                        <button class="btn-delete" onclick="eliminaVideo(${v.id})">Elimina</button>
+                    `;
+                    lista.appendChild(div);
+                });
+            } catch (e) {
+                console.error("Errore nel caricamento video:", e);
+            }
+        }
+
+        document.getElementById("form-video").addEventListener("submit", async function(e) {
+            e.preventDefault();
+
+            let url = document.getElementById("url-video").value;
+            let commento = document.getElementById("commento").value;
+
+            try {
+                let risposta = await fetch(API_URL + "/film/" + filmId + "/video", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        url_video_youtube: url,
+                        commento: commento
+                    })
+                });
+
+                if (risposta.ok) {
+                    document.getElementById("form-video").reset();
+                    caricaVideo();
+                } else {
+                    alert("Errore nell'aggiunta del video");
+                }
+            } catch (e) {
+                console.error("Errore:", e);
+            }
+        });
+
+        async function eliminaVideo(videoId) {
+            if (confirm("Eliminare questo video?")) {
+                try {
+                    let risposta = await fetch(API_URL + "/film/" + filmId + "/video/" + videoId, {
+                        method: "DELETE"
+                    });
+
+                    if (risposta.ok) {
+                        caricaVideo();
+                    }
+                } catch (e) {
+                    console.error("Errore:", e);
+                }
+            }
+        }
+
+        window.onload = caricaFilm;
+    </script>
 </body>
 </html>

@@ -1,6 +1,5 @@
-from fastapi import APIRouter
-import sqlite3
 from fastapi import APIRouter, HTTPException
+import sqlite3
 from pydantic import BaseModel
 
 router = APIRouter()
@@ -14,11 +13,11 @@ class UtenteAuth(BaseModel):
     password: str    
 
 class FilmAuth(BaseModel):
-	titolo: str
-	trama: str
-	anno: int
-	url_locandina: str
-	tmdb_id: str    
+    titolo: str
+    trama: str
+    anno: int
+    url_locandina: str
+    tmdb_id: str    
 
 @router.get("/")
 def root():

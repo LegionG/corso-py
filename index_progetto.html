@@ -122,61 +122,73 @@
         <div class="search-box">
             <input type="text" id="campoCerca" placeholder="Cerca un film...">
             <button onclick="avviaRicerca()">Cerca</button>
+            <button onclick="window.location.href='playlist.html'" style="background: #666;">📋 Le Mie Playlist</button>
         </div>
 
         <div id="risultati"></div>
     </div>
 
     <script>
-        const API_URL = "https://friendly-invention-9rwvwjr9g6wh6w7-8000.app.github.dev";
+        const API_URL = "http://localhost:8000";
 
-        window.onload = async function() {
-            let risposta = await fetch(API_URL + "/film");
-            let dati = await risposta.json();
-            let lista = document.getElementById("risultati");
-            lista.innerHTML = "";
+        async function caricaFilm(url) {
+            try {
+                let risposta = await fetch(url);
+                
+                if (!risposta.ok) {
+                    throw new Error("Errore nella ricerca");
+                }
+                
+                let dati = await risposta.json();
+                let lista = document.getElementById("risultati");
+                lista.innerHTML = "";
 
-            dati.forEach(p => {
-                let div = document.createElement("div");
-                div.className = "film-card";
-                div.onclick = function() {
-                window.location.href = "film/" + p.id;
-};
+                if (dati.length === 0) {
+                    lista.innerHTML = "<p style='grid-column: 1/-1; text-align: center; color: #ddd;'>Nessun film trovato</p>";
+                    return;
+                }
 
-                div.innerHTML = `
-                    <img src="${p.url_locandina}" alt="${p.titolo}">
-                    <h3>${p.titolo}</h3>
-                    <p>📅 ${p.anno}</p>
-`;
+                dati.forEach(p => {
+                    let div = document.createElement("div");
+                    div.className = "film-card";
+                    div.style.cursor = "pointer";
+                    div.onclick = function() {
+                        window.location.href = "film.html?id=" + p.id;
+                    };
 
+                    div.innerHTML = `
+                        <img src="${p.url_locandina}" alt="${p.titolo}">
+                        <h3>${p.titolo}</h3>
+                        <p>📅 ${p.anno}</p>
+                    `;
 
-                lista.appendChild(div);
-            });
+                    lista.appendChild(div);
+                });
+            } catch (e) {
+                console.error("Errore:", e);
+                document.getElementById("risultati").innerHTML = "<p style='grid-column: 1/-1; text-align: center; color: #ff4757;'>Errore nel caricamento</p>";
+            }
+        }
+
+        window.onload = function() {
+            caricaFilm(API_URL + "/film");
         };
         
-        async function avviaRicerca() {
+        function avviaRicerca() {
             let testo = document.getElementById("campoCerca").value;
-            let risposta = await fetch(API_URL + "/film/cerca?keyword=" + testo);
-
-            let dati = await risposta.json();
-
-            let lista = document.getElementById("risultati");
-            lista.innerHTML = "";
-
-            dati.forEach(p => {
-                let div = document.createElement("div");
-                div.className = "film-card";
-
-                div.innerHTML = `
-    <img src="${p.url_locandina}" alt="${p.titolo}">
-    <h3>${p.titolo}</h3>
-    <p>📅 ${p.anno}</p>
-`;
-
-
-                lista.appendChild(div);
-            });
+            if (testo.trim() === "") {
+                caricaFilm(API_URL + "/film");
+            } else {
+                caricaFilm(API_URL + "/film/cerca?keyword=" + encodeURIComponent(testo));
+            }
         }
+
+        // Permetti ricerca con Enter
+        document.addEventListener("keypress", function(e) {
+            if (e.key === "Enter" && document.getElementById("campoCerca") === document.activeElement) {
+                avviaRicerca();
+            }
+        });
     </script>
 
 </body>
