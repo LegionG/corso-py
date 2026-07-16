@@ -4,9 +4,11 @@ import sqlite3
 
 app = FastAPI()
 
+
 class ProdottoIn(BaseModel):
     nome: str
     prezzo: float
+
 
 @app.get("/prodotti")
 def ottieni_prodotti():
@@ -18,8 +20,10 @@ def ottieni_prodotti():
     conn.close()
     return risultato
 
+
 @app.get("/prodotti/cerca")
 def cerca_prodotti(keyword: str):
+    """Cerca i prodotti nel database il cui nome contiene la keyword passata."""
     conn = sqlite3.connect("database.db")
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -27,6 +31,7 @@ def cerca_prodotti(keyword: str):
     risultato = cursor.fetchall()
     conn.close()
     return risultato
+
 
 @app.delete("/prodotti/cancella/{id_prodotto}")
 def elimina(id_prodotto: int):
@@ -43,6 +48,7 @@ def elimina(id_prodotto: int):
     conn.close()
     return {"messaggio": "Prodotto eliminato"}
 
+
 @app.put("/prodotti/modifica/{id_prodotto}")
 def aggiorna(id_prodotto: int, prodottoIn: ProdottoIn):
     conn = sqlite3.connect("database.db")
@@ -52,7 +58,6 @@ def aggiorna(id_prodotto: int, prodottoIn: ProdottoIn):
         "UPDATE prodotti SET nome = ?, prezzo = ? WHERE id = ?",
         (prodottoIn.nome, prodottoIn.prezzo, id_prodotto)
     )
-
     conn.commit()
 
     if cursor.rowcount == 0:
@@ -61,3 +66,8 @@ def aggiorna(id_prodotto: int, prodottoIn: ProdottoIn):
 
     conn.close()
     return {"messaggio": "Prodotto aggiornato"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

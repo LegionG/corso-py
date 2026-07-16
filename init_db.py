@@ -20,13 +20,22 @@ def dbInit():
     """)
     conn.commit()
 
+    # Svuoto la tabella prodotti prima di reinserire i dati,
+    # cosi' posso richiamare questa funzione senza creare duplicati
+    cursor.execute("DELETE FROM prodotti")
+
     lista_prodotti = [
      ("Mouse Wireless", 25.50),
      ("Tastiera Meccanica", 89.90),
      ("Monitor 24 Pollici", 149.00),
      ("Cuffie Gaming", 45.00),
-     ("Tappetino XL", 15.00)    
+     ("Tappetino XL", 15.00)
     ]
     cursor.executemany("INSERT INTO prodotti (nome, prezzo) VALUES (?, ?)", lista_prodotti)
     conn.commit()
     conn.close()
+    print("Database inizializzato correttamente.")
+
+
+if __name__ == "__main__":
+    dbInit()
